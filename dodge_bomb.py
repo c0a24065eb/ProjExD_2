@@ -1,6 +1,7 @@
 import os
 import sys
 import pygame as pg
+import random
 
 
 WIDTH, HEIGHT = 1100, 650
@@ -17,11 +18,24 @@ def main():
     clock = pg.time.Clock()
     tmr = 0
 
+    # bullet
+    bb_img = pg.Surface((20, 20))
+    bb_rct = bb_img.get_rect()
+    bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
+    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
+    bb_img.set_colorkey((0, 0, 0))
+    vx, vy = +5, +5
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
         screen.blit(bg_img, [0, 0]) 
+        
+        # bullet movement
+        bb_rct.move_ip(vx, vy)
+        screen.blit(bb_img, bb_rct)
+
         key_lst = pg.key.get_pressed()
         DELTA = (0, 0,)
         if key_lst[pg.K_UP]:
