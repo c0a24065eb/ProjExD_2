@@ -85,6 +85,8 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
     kk_img = pg.image.load("fig/3.png")
+
+    # こうかとんの向き別画像辞書
     kk_direction_dict = {
         (-5, 0): pg.transform.rotozoom(kk_img, 0, 0.9),
         (5, 0): pg.transform.flip(kk_img, True, False),
@@ -95,6 +97,8 @@ def main():
         (-5, 5): pg.transform.rotozoom(kk_img, 45, 0.9),
         (5, 5): pg.transform.rotozoom(pg.transform.flip(kk_img, True, False), -45, 0.9),
     }
+
+    # 初期こうかとん
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
@@ -103,6 +107,7 @@ def main():
     tmr = 0
     bullets = []
 
+    # 爆弾追加
     for i in range(5):
         bb_img = pg.Surface((20, 20))
         bb_rct = bb_img.get_rect()
