@@ -124,6 +124,12 @@ def main():
     text_rect = text.get_rect()
     text_rect.center = WIDTH // 2, HEIGHT // 2
 
+    # DELTA dict
+    DELTA = {pg.K_UP: pgm.Vector2(0, -5), 
+             pg.K_DOWN: pgm.Vector2(0, 5), 
+             pg.K_LEFT: pgm.Vector2(-5, 0), 
+             pg.K_RIGHT: pgm.Vector2(5, 0)}
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
@@ -136,20 +142,15 @@ def main():
             screen.blit(bullet.img, bullet.rct)
 
         key_lst = pg.key.get_pressed()
-        DELTA = (0, 0,)
-        if key_lst[pg.K_UP]:
-            DELTA = (DELTA[0], DELTA[1] - 5)
-        if key_lst[pg.K_DOWN]:
-            DELTA = (DELTA[0], DELTA[1] + 5)
-        if key_lst[pg.K_LEFT]:
-            DELTA = (DELTA[0] - 5, DELTA[1])
-        if key_lst[pg.K_RIGHT]:
-            DELTA = (DELTA[0] + 5, DELTA[1])
+        move = pgm.Vector2(0, 0)
+        for k, v in DELTA.items():
+            if key_lst[k]:
+                move += v
 
-        kk_img = kk_direction_dict.get(DELTA, kk_img) if DELTA != (0, 0) else kk_img
+        kk_img = kk_direction_dict.get((int(move.x), int(move.y)), kk_img)
         
-        if check_bound(kk_rct.move(DELTA)) == (True, True):
-            kk_rct.move_ip(DELTA)
+        if check_bound(kk_rct.move(move)) == (True, True):
+            kk_rct.move_ip(move)
         screen.blit(kk_img, kk_rct)
         pg.display.update()
 
