@@ -38,6 +38,10 @@ def main():
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
     bb_img.set_colorkey((0, 0, 0))
     vx, vy = +5, +5
+    bullet_speed_size_increase_interval = 100  # Increase speed and size every 100 frames
+    bullet_speed_increment = 1.1  # Speed increment value
+    bullet_size_increment = 2  # Size increment value
+    bullet_timer = 0
 
     # gameover screen
     black_screen = pg.Surface((WIDTH, HEIGHT))
@@ -54,7 +58,18 @@ def main():
                 return
         screen.blit(bg_img, [0, 0]) 
         
-        # bullet movement
+        # bullet 
+        if bullet_timer >= bullet_speed_size_increase_interval:
+            vx *= bullet_speed_increment
+            vy *= bullet_speed_increment
+            bb_new_img = pg.Surface((bb_rct.width + bullet_size_increment, bb_rct.height + bullet_size_increment))
+            pg.draw.circle(bb_new_img, (255, 0, 0), (bb_new_img.get_width() // 2, bb_new_img.get_height() // 2), bb_new_img.get_width() // 2)
+            bb_new_img.set_colorkey((0, 0, 0))
+            bb_img = bb_new_img
+            bb_rct = bb_img.get_rect(center=bb_rct.center)
+            bullet_timer = 0
+
+        # move bullet
         yoko, tate = check_bound(bb_rct)
         if not yoko:
             vx *= -1
@@ -89,6 +104,7 @@ def main():
             return
 
         tmr += 1
+        bullet_timer += 1
         clock.tick(50)
 
 
