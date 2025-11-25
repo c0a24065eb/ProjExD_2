@@ -2,6 +2,7 @@ import os
 import sys
 import pygame as pg
 import random
+import math
 
 
 WIDTH, HEIGHT = 1100, 650
@@ -24,10 +25,22 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("fig/pg_bg.jpg")    
+    bg_img = pg.image.load("fig/pg_bg.jpg")
+    kk_img = pg.image.load("fig/3.png")
+    kk_direction_dict = {
+        (-5, 0): pg.transform.rotozoom(kk_img, 0, 0.9),
+        (5, 0): pg.transform.flip(kk_img, True, False),
+        (0, 5): pg.transform.rotozoom(pg.transform.flip(kk_img, False, True), 90, 0.9),
+        (0, -5): pg.transform.flip(pg.transform.rotozoom(kk_img, -90, 0.9), True, False),
+        (-5, -5): pg.transform.rotozoom(kk_img, -45, 0.9),
+        (5, -5): pg.transform.rotozoom(pg.transform.flip(kk_img, True, False), 45, 0.9),
+        (-5, 5): pg.transform.rotozoom(kk_img, 45, 0.9),
+        (5, 5): pg.transform.rotozoom(pg.transform.flip(kk_img, True, False), -45, 0.9),
+    }
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
+    
     clock = pg.time.Clock()
     tmr = 0
 
@@ -89,6 +102,9 @@ def main():
             DELTA = (DELTA[0] - 5, DELTA[1])
         if key_lst[pg.K_RIGHT]:
             DELTA = (DELTA[0] + 5, DELTA[1])
+
+        kk_img = kk_direction_dict.get(DELTA, kk_img) if DELTA != (0, 0) else kk_img
+        
         if check_bound(kk_rct.move(DELTA)) == (True, True):
             kk_rct.move_ip(DELTA)
         screen.blit(kk_img, kk_rct)
