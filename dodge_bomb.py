@@ -8,6 +8,11 @@ WIDTH, HEIGHT = 1100, 650
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
+    """
+    引数：こうかとんRectかばくだんRect
+    戻り値：タプル（横方向判定結果，縦方向判定結果）
+    画面内ならTrue，画面外ならFalse
+    """
     yoko, tate = True, True
     if rct.left < 0 or WIDTH < rct.right:
         yoko = False
@@ -33,6 +38,15 @@ def main():
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
     bb_img.set_colorkey((0, 0, 0))
     vx, vy = +5, +5
+
+    # gameover screen
+    black_screen = pg.Surface((WIDTH, HEIGHT))
+    black_screen.fill((0, 0, 0))
+    font = pg.font.Font(None, 150)
+    text = font.render("GAME OVER", True, (255, 255, 255))
+    text_rect = text.get_rect()
+    text_rect.center = WIDTH // 2, HEIGHT // 2
+    game_over_displayed = False
 
     while True:
         for event in pg.event.get():
@@ -67,6 +81,11 @@ def main():
 
         # collision check
         if kk_rct.colliderect(bb_rct):
+            # display game over screen
+            screen.blit(black_screen, (0, 0))
+            screen.blit(text, text_rect)
+            pg.display.update()
+            pg.time.wait(2000)
             return
 
         tmr += 1
