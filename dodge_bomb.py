@@ -10,7 +10,11 @@ WIDTH, HEIGHT = 1100, 650
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 class Bomb:
-    def __init__(self, img: pg.Surface, rct: pg.Rect, direction = random.uniform(0, 360), speed = 5, sensitivity = 3): 
+    """ばくだんをあらわすクラス"""
+    def __init__(self, img: pg.Surface, rct: pg.Rect, direction = random.uniform(0, 360), speed = 5, sensitivity = 3):
+        """
+        引数：ばくだん画像Surface，ばくだんRect，進行方向（デフォルトはランダム），速度（デフォルト5），感度（デフォルト3）
+        """ 
         self.img = img
         self.rct = rct
         self.vector = pgm.Vector2.from_polar((speed, direction))
@@ -18,7 +22,11 @@ class Bomb:
         self.sensitivity = sensitivity  # Adjust this value to change how quickly the bullet homes in
 
     def move(self, target_rct: pg.Rect):
-
+        """
+        ばくだんを進行方向にspeedだけ動かす。画面外に出たら跳ね返る。
+        目標（こうかとん）に向かって徐々に進行方向を変える。
+        引数：目標のRect
+        """
         yoko, tate = check_bound(self.rct)
         if not yoko:
             self.vector = pgm.Vector2.from_polar((self.vector.length(), 180 - self.vector.as_polar()[1]))
