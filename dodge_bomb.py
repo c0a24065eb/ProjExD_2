@@ -10,14 +10,14 @@ WIDTH, HEIGHT = 1100, 650
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 class Bomb:
-    def __init__(self, img: pg.Surface, rct: pg.Rect, direction = random.uniform(0, 360)): 
+    def __init__(self, img: pg.Surface, rct: pg.Rect, direction = random.uniform(0, 360), speed = 5, sensitivity = 3): 
         self.img = img
         self.rct = rct
-        self.vector = pgm.Vector2.from_polar((5, direction))
+        self.vector = pgm.Vector2.from_polar((speed, direction))
         self.develop_progress = 0
+        self.sensitivity = sensitivity  # Adjust this value to change how quickly the bullet homes in
 
     def move(self, target_rct: pg.Rect):
-        bullet_sensitivity = 3  # Adjust this value to change how quickly the bullet homes in
 
         yoko, tate = check_bound(self.rct)
         if not yoko:
@@ -34,10 +34,10 @@ class Bomb:
         current_angle = self.vector.as_polar()[1]
         angle_diff = (target_angle - current_angle + 180) % 360 - 180
         
-        if abs(angle_diff) < bullet_sensitivity:
+        if abs(angle_diff) < self.sensitivity:
             self.vector = pgm.Vector2.from_polar((self.vector.length(), target_angle))
         else:
-            self.vector.rotate_ip(bullet_sensitivity if angle_diff > 0 else -bullet_sensitivity)
+            self.vector.rotate_ip(self.sensitivity if angle_diff > 0 else -self.sensitivity)
 
         self.rct.move_ip(self.vector)
 
@@ -93,15 +93,15 @@ def main():
     
     clock = pg.time.Clock()
     tmr = 0
+    bullets = []
 
-    # bullet
-    bb_img = pg.Surface((20, 20))
-    bb_rct = bb_img.get_rect()
-    bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
-    bb_img.set_colorkey((0, 0, 0))
-
-    bullet = Bomb(bb_img, bb_rct)
+    for i in range(5):
+        bb_img = pg.Surface((20, 20))
+        bb_rct = bb_img.get_rect()
+        bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
+        pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
+        bb_img.set_colorkey((0, 0, 0))
+        bullets.append(Bomb(bb_img, bb_rct, random.uniform(0, 360), speed=random.randint(2, 4), sensitivity=random.uniform(2, 5)))
 
     # gameover screen
     black_screen = pg.Surface((WIDTH, HEIGHT))
@@ -118,9 +118,9 @@ def main():
         screen.blit(bg_img, [0, 0]) 
 
         # move bullet (homing behavior)
-        bullet.move(kk_rct)
-        screen.blit(bullet.img, bullet.rct)
-
+        for bullet in bullets:
+            bullet.move(kk_rct)
+            screen.blit(bullet.img, bullet.rct)
 
         key_lst = pg.key.get_pressed()
         DELTA = (0, 0,)
@@ -141,16 +141,18 @@ def main():
         pg.display.update()
 
         # collision check
-        if kk_rct.colliderect(bullet.rct):
-            # display game over screen
-            screen.blit(black_screen, (0, 0))
-            screen.blit(text, text_rect)
-            pg.display.update()
-            pg.time.wait(2000)
-            return
-
+        for bullet in bullets:
+            if kk_rct.colliderect(bullet.rct):
+                # display game over screen
+                screen.blit(black_screen, (0, 0))
+                screen.blit(text, text_rect)
+                pg.display.update()
+                pg.time.wait(2000)
+                return
+        # bullet develop
+        for bullet in bullets:
+            bullet.develop()
         tmr += 1
-        bullet.develop()
         clock.tick(50)
 
 
