@@ -3,10 +3,60 @@ import sys
 import pygame as pg
 import random
 import math
+import pygame.math as pgm
 
 
 WIDTH, HEIGHT = 1100, 650
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+class Bomb:
+    def __init__(self, img: pg.Surface, rct: pg.Rect, direction = random.uniform(0, 360)): 
+        self.img = img
+        self.rct = rct
+        self.vector = pgm.Vector2.from_polar((5, direction))
+        self.develop_progress = 0
+
+    def move(self, target_rct: pg.Rect):
+        bullet_sensitivity = 3  # Adjust this value to change how quickly the bullet homes in
+
+        yoko, tate = check_bound(self.rct)
+        if not yoko:
+            self.vector = pgm.Vector2.from_polar((self.vector.length(), 180 - self.vector.as_polar()[1]))
+        if not tate:
+            self.vector = pgm.Vector2.from_polar((self.vector.length(), -self.vector.as_polar()[1]))
+
+        target_vector = pgm.Vector2(target_rct.center)
+        self_vector = pgm.Vector2(self.rct.center)
+        direction = target_vector - self_vector
+        
+        # Calculate angle difference properly handling wraparound
+        target_angle = direction.as_polar()[1]
+        current_angle = self.vector.as_polar()[1]
+        angle_diff = (target_angle - current_angle + 180) % 360 - 180
+        
+        if abs(angle_diff) < bullet_sensitivity:
+            self.vector = pgm.Vector2.from_polar((self.vector.length(), target_angle))
+        else:
+            self.vector.rotate_ip(bullet_sensitivity if angle_diff > 0 else -bullet_sensitivity)
+
+        self.rct.move_ip(self.vector)
+
+    def develop(self):
+        """ばくだんを徐々に大きくする、速度を上げる"""
+        self.develop_progress += 1
+        if self.develop_progress >= 100:
+            # increase size
+            new_surface = pg.Surface((self.img.get_width() + 2, self.img.get_height() + 2))
+            new_surface.set_colorkey((0, 0, 0))
+            pg.draw.circle(new_surface, (255, 0, 0), (new_surface.get_width() // 2, new_surface.get_height() // 2), new_surface.get_width() // 2)
+            self.img = new_surface
+            self.rct = self.img.get_rect(center=self.rct.center)
+            self.develop_progress = 0
+
+            #increase speed
+            speed = self.vector.length() * 1.1
+            self.vector = pgm.Vector2.from_polar((speed, self.vector.as_polar()[1]))
+
 
 def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     """
@@ -50,12 +100,8 @@ def main():
     bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
     bb_img.set_colorkey((0, 0, 0))
-    bullet_direction = random.uniform(0, 2 * math.pi)
-    bullet_speed = 5
-    bullet_speed_size_increase_interval = 100  # Increase speed and size every 100 frames
-    bullet_speed_increment = 1.1  # Speed increment value
-    bullet_size_increment = 2  # Size increment value
-    bullet_timer = 0
+
+    bullet = Bomb(bb_img, bb_rct)
 
     # gameover screen
     black_screen = pg.Surface((WIDTH, HEIGHT))
@@ -64,38 +110,16 @@ def main():
     text = font.render("GAME OVER", True, (255, 255, 255))
     text_rect = text.get_rect()
     text_rect.center = WIDTH // 2, HEIGHT // 2
-    game_over_displayed = False
 
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
         screen.blit(bg_img, [0, 0]) 
-        
-        # bullet 
-        if bullet_timer >= bullet_speed_size_increase_interval:
-            bullet_speed *= bullet_speed_increment
-            bb_new_img = pg.Surface((bb_rct.width + bullet_size_increment, bb_rct.height + bullet_size_increment))
-            pg.draw.circle(bb_new_img, (255, 0, 0), (bb_new_img.get_width() // 2, bb_new_img.get_height() // 2), bb_new_img.get_width() // 2)
-            bb_new_img.set_colorkey((0, 0, 0))
-            bb_img = bb_new_img
-            bb_rct = bb_img.get_rect(center=bb_rct.center)
-            bullet_timer = 0
 
         # move bullet (homing behavior)
-        dx = kk_rct.centerx - bb_rct.centerx
-        dy = kk_rct.centery - bb_rct.centery
-        angle = math.atan2(dy, dx)
-        vx = bullet_speed * math.cos(angle)
-        vy = bullet_speed * math.sin(angle)
-
-        yoko, tate = check_bound(bb_rct)
-        if not yoko:
-            vx *= -1
-        if not tate:
-            vy *= -1
-        bb_rct.move_ip(vx, vy)
-        screen.blit(bb_img, bb_rct)
+        bullet.move(kk_rct)
+        screen.blit(bullet.img, bullet.rct)
 
 
         key_lst = pg.key.get_pressed()
@@ -117,7 +141,7 @@ def main():
         pg.display.update()
 
         # collision check
-        if kk_rct.colliderect(bb_rct):
+        if kk_rct.colliderect(bullet.rct):
             # display game over screen
             screen.blit(black_screen, (0, 0))
             screen.blit(text, text_rect)
@@ -126,7 +150,7 @@ def main():
             return
 
         tmr += 1
-        bullet_timer += 1
+        bullet.develop()
         clock.tick(50)
 
 
