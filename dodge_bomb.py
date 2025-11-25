@@ -64,6 +64,11 @@ def main():
             kk_rct.move_ip(DELTA)
         screen.blit(kk_img, kk_rct)
         pg.display.update()
+
+        # collision check
+        if kk_rct.colliderect(bb_rct):
+            return
+
         tmr += 1
         clock.tick(50)
 
